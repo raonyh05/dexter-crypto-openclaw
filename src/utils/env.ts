@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { config } from 'dotenv';
 import { getProviderById } from '@/providers';
+import { OPENAI_CREDENTIAL_ENV_VARS, normalizeCredentialValue } from './provider-auth.js';
 
 // Load .env on module import
 config({ quiet: true });
@@ -9,19 +10,32 @@ export function getApiKeyNameForProvider(providerId: string): string | undefined
   return getProviderById(providerId)?.apiKeyEnvVar;
 }
 
+export function getCredentialEnvNamesForProvider(providerId: string): string[] {
+  if (providerId === 'openai') {
+    return [...OPENAI_CREDENTIAL_ENV_VARS];
+  }
+
+  const apiKeyName = getApiKeyNameForProvider(providerId);
+  return apiKeyName ? [apiKeyName] : [];
+}
+
+export function getCredentialLabelForProvider(providerId: string): string {
+  return providerId === 'openai' ? 'credential' : 'API key';
+}
+
 export function getProviderDisplayName(providerId: string): string {
   return getProviderById(providerId)?.displayName ?? providerId;
 }
 
 export function checkApiKeyExistsForProvider(providerId: string): boolean {
-  const apiKeyName = getApiKeyNameForProvider(providerId);
-  if (!apiKeyName) return true;
-  return checkApiKeyExists(apiKeyName);
+  const credentialEnvNames = getCredentialEnvNamesForProvider(providerId);
+  if (credentialEnvNames.length === 0) return true;
+  return credentialEnvNames.some((envVarName) => checkApiKeyExists(envVarName));
 }
 
 export function checkApiKeyExists(apiKeyName: string): boolean {
-  const value = process.env[apiKeyName];
-  if (value && value.trim() && !value.trim().startsWith('your-')) {
+  const value = normalizeCredentialValue(process.env[apiKeyName]);
+  if (value) {
     return true;
   }
 
@@ -34,8 +48,8 @@ export function checkApiKeyExists(apiKeyName: string): boolean {
       if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
         const [key, ...valueParts] = trimmed.split('=');
         if (key.trim() === apiKeyName) {
-          const val = valueParts.join('=').trim();
-          if (val && !val.startsWith('your-')) {
+          const val = normalizeCredentialValue(valueParts.join('=').trim());
+          if (val) {
             return true;
           }
         }
@@ -79,7 +93,7 @@ export function saveApiKeyToEnv(apiKeyName: string, apiKeyValue: string): boolea
         lines.push(`${apiKeyName}=${apiKeyValue}`);
       }
     } else {
-      lines.push('# LLM API Keys');
+      lines.push('# LLM Credentials');
       lines.push(`${apiKeyName}=${apiKeyValue}`);
     }
 

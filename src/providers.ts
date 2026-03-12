@@ -18,6 +18,13 @@ export interface ProviderDef {
 
 export const PROVIDERS: ProviderDef[] = [
   {
+    id: 'xai',
+    displayName: 'xAI',
+    modelPrefix: 'grok-',
+    apiKeyEnvVar: 'XAI_API_KEY',
+    fastModel: 'grok-4-1-fast-reasoning',
+  },
+  {
     id: 'openai',
     displayName: 'OpenAI',
     modelPrefix: '',
@@ -37,13 +44,6 @@ export const PROVIDERS: ProviderDef[] = [
     modelPrefix: 'gemini-',
     apiKeyEnvVar: 'GOOGLE_API_KEY',
     fastModel: 'gemini-3-flash-preview',
-  },
-  {
-    id: 'xai',
-    displayName: 'xAI',
-    modelPrefix: 'grok-',
-    apiKeyEnvVar: 'XAI_API_KEY',
-    fastModel: 'grok-4-1-fast-reasoning',
   },
   {
     id: 'moonshot',

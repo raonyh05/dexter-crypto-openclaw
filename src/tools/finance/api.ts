@@ -8,6 +8,15 @@ export interface ApiResponse {
   url: string;
 }
 
+type ApiKeyResolver = string | (() => string | undefined);
+
+export interface ApiConfig {
+  baseUrl: string;
+  apiKey?: ApiKeyResolver;
+  apiKeyHeader?: string;
+  label?: string;
+}
+
 /**
  * Remove redundant fields from API payloads before they are returned to the LLM.
  * This reduces token usage while preserving the financial metrics needed for analysis.
@@ -40,14 +49,22 @@ export function stripFieldsDeep(value: unknown, fields: readonly string[]): unkn
   return walk(value);
 }
 
-export async function callApi(
+function resolveApiKey(apiKey?: ApiKeyResolver): string | undefined {
+  if (typeof apiKey === 'function') {
+    return apiKey();
+  }
+  return apiKey;
+}
+
+export async function callConfiguredApi(
+  config: ApiConfig,
   endpoint: string,
   params: Record<string, string | number | string[] | undefined>,
   options?: { cacheable?: boolean }
 ): Promise<ApiResponse> {
   const label = describeRequest(endpoint, params);
 
-  // Check local cache first — avoids redundant network calls for immutable data
+  // Check local cache first to avoid redundant network calls for immutable data.
   if (options?.cacheable) {
     const cached = readCache(endpoint, params);
     if (cached) {
@@ -55,52 +72,52 @@ export async function callApi(
     }
   }
 
-  // Read API key lazily at call time (after dotenv has loaded)
-  const FINANCIAL_DATASETS_API_KEY = process.env.FINANCIAL_DATASETS_API_KEY;
+  const apiKey = resolveApiKey(config.apiKey);
+  const apiLabel = config.label ?? 'External API';
 
-  if (!FINANCIAL_DATASETS_API_KEY) {
-    logger.warn(`[Financial Datasets API] call without key: ${label}`);
+  if (!apiKey) {
+    logger.warn(`[${apiLabel}] call without key: ${label}`);
   }
 
-  const url = new URL(`${BASE_URL}${endpoint}`);
+  const url = new URL(endpoint, config.baseUrl);
 
-  // Add params to URL, handling arrays
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      if (Array.isArray(value)) {
-        value.forEach((v) => url.searchParams.append(key, v));
-      } else {
-        url.searchParams.append(key, String(value));
-      }
+    if (value === undefined || value === null) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item) => url.searchParams.append(key, item));
+    } else {
+      url.searchParams.append(key, String(value));
     }
   }
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
-      headers: {
-        'x-api-key': FINANCIAL_DATASETS_API_KEY || '',
-      },
-    });
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers[config.apiKeyHeader ?? 'x-api-key'] = apiKey;
+    }
+
+    response = await fetch(url.toString(), { headers });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error(`[Financial Datasets API] network error: ${label} — ${message}`);
-    throw new Error(`[Financial Datasets API] request failed for ${label}: ${message}`);
+    logger.error(`[${apiLabel}] network error: ${label} -> ${message}`);
+    throw new Error(`[${apiLabel}] request failed for ${label}: ${message}`);
   }
 
   if (!response.ok) {
     const detail = `${response.status} ${response.statusText}`;
-    logger.error(`[Financial Datasets API] error: ${label} — ${detail}`);
-    throw new Error(`[Financial Datasets API] request failed: ${detail}`);
+    logger.error(`[${apiLabel}] error: ${label} -> ${detail}`);
+    throw new Error(`[${apiLabel}] request failed: ${detail}`);
   }
 
   const data = await response.json().catch(() => {
     const detail = `invalid JSON (${response.status} ${response.statusText})`;
-    logger.error(`[Financial Datasets API] parse error: ${label} — ${detail}`);
-    throw new Error(`[Financial Datasets API] request failed: ${detail}`);
+    logger.error(`[${apiLabel}] parse error: ${label} -> ${detail}`);
+    throw new Error(`[${apiLabel}] request failed: ${detail}`);
   });
 
-  // Persist for future requests when the caller marked the response as cacheable
   if (options?.cacheable) {
     writeCache(endpoint, params, data, url.toString());
   }
@@ -108,3 +125,20 @@ export async function callApi(
   return { data, url: url.toString() };
 }
 
+export async function callApi(
+  endpoint: string,
+  params: Record<string, string | number | string[] | undefined>,
+  options?: { cacheable?: boolean }
+): Promise<ApiResponse> {
+  return callConfiguredApi(
+    {
+      baseUrl: BASE_URL,
+      apiKey: () => process.env.FINANCIAL_DATASETS_API_KEY,
+      apiKeyHeader: 'x-api-key',
+      label: 'Financial Datasets API',
+    },
+    endpoint,
+    params,
+    options
+  );
+}

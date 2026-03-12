@@ -14,7 +14,7 @@ The heartbeat runs on a schedule and uses this checklist to decide what to check
 
 - User asks to add, remove, or change what the heartbeat monitors
 - User asks "what's my heartbeat checking?" or similar
-- User says things like "watch NVDA", "stop checking TSLA", "add a market check"
+- User says things like "watch BTC unlocks", "track Hyperliquid governance", "add a market check"
 
 ## Actions
 
@@ -44,7 +44,7 @@ export const heartbeatTool = new DynamicStructuredTool({
   func: async (input) => {
     if (input.action === 'view') {
       if (!existsSync(HEARTBEAT_MD_PATH)) {
-        return 'No heartbeat checklist configured yet. The heartbeat will use a default checklist (major index moves + breaking financial news). Use the update action to customize what gets checked.';
+        return 'No heartbeat checklist configured yet. The heartbeat will use a default checklist (major crypto moves + breaking market news). Use the update action to customize what gets checked.';
       }
       const content = readFileSync(HEARTBEAT_MD_PATH, 'utf-8');
       return `Current heartbeat checklist:\n\n${content}`;

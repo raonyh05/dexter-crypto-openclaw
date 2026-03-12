@@ -323,7 +323,8 @@ Uses the official X API v2 (read-only, last 7 days).
 
 ## When NOT to Use
 
-- Structured financial data (use financial_search instead)
+- Structured company financial data (use financial_search instead)
+- Structured crypto snapshots such as tokenomics, protocol KPIs, liquidity, or governance history when crypto_search / protocol_metrics can answer directly
 - Historical data beyond 7 days (X recent search is limited to last 7 days)
 - General web research (use web_search instead)
 

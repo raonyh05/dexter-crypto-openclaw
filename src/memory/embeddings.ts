@@ -2,6 +2,7 @@ import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { OllamaEmbeddings } from '@langchain/ollama';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import type { EmbeddingProviderId, MemoryEmbeddingClient } from './types.js';
+import { getOpenAICredential } from '../utils/provider-auth.js';
 
 const DEFAULT_OPENAI_MODEL = 'text-embedding-3-small';
 const DEFAULT_GEMINI_MODEL = 'gemini-embedding-001';
@@ -11,7 +12,7 @@ const EMBEDDING_BATCH_SIZE = 64;
 type ResolvedProvider = Exclude<EmbeddingProviderId, 'auto' | 'none'>;
 
 function resolveProvider(preferred: EmbeddingProviderId): ResolvedProvider | null {
-  if (preferred === 'openai' && process.env.OPENAI_API_KEY) {
+  if (preferred === 'openai' && getOpenAICredential()) {
     return 'openai';
   }
   if (preferred === 'gemini' && process.env.GOOGLE_API_KEY) {
@@ -22,7 +23,7 @@ function resolveProvider(preferred: EmbeddingProviderId): ResolvedProvider | nul
   }
 
   if (preferred === 'auto') {
-    if (process.env.OPENAI_API_KEY) {
+    if (getOpenAICredential()) {
       return 'openai';
     }
     if (process.env.GOOGLE_API_KEY) {
@@ -60,8 +61,12 @@ export function createEmbeddingClient(params: {
 
   if (resolved === 'openai') {
     const model = params.model || DEFAULT_OPENAI_MODEL;
+    const credential = getOpenAICredential();
+    if (!credential) {
+      return null;
+    }
     const embeddings = new OpenAIEmbeddings({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: credential.value,
       model,
     });
     return {

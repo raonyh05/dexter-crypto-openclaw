@@ -1,84 +1,94 @@
 ---
 name: x-research
 description: >
-  X/Twitter public sentiment research. Searches X for real-time perspectives,
-  market sentiment, expert opinions, breaking news, and community discourse.
-  Use when: user asks "what are people saying about", "X/Twitter sentiment",
-  "check X for", "search twitter for", "what's CT saying about", or wants
-  public opinion on a stock, sector, company, or market event.
+  Crypto CT and X/Twitter research. Searches X for real-time sentiment,
+  catalysts, governance reactions, exploit chatter, and narrative divergence.
+  Use when the user asks "what's CT saying", "check X/Twitter", "market
+  sentiment", "community reaction", or wants to know how crypto-native
+  accounts are framing a token, protocol, chain, or event.
 ---
 
 # X Research Skill
 
-Agentic research over X/Twitter using the `x_search` tool. Decompose the
-research question into targeted searches, iterate to refine signal, and
-synthesize into a sourced sentiment briefing.
+Agentic research over X/Twitter using the `x_search` tool. This skill is tuned
+for crypto topics, where signal often lives in the split between official
+accounts, sophisticated CT, and noisy shill traffic.
 
 ## Research Loop
 
-### 1. Decompose into Queries
+### 1. Break the question into search lanes
 
-Turn the research question into 3–5 targeted queries using X operators:
+Turn the research question into 3-5 targeted searches:
 
-- **Core query**: Direct keywords or `$TICKER` cashtag
-- **Expert voices**: `from:username` for known analysts or accounts
-- **Bearish signal**: keywords like `(overvalued OR bubble OR risk OR concern)`
-- **Bullish signal**: keywords like `(bullish OR upside OR catalyst OR beat)`
-- **News/links**: add `has:links` to surface tweets with sources
-- **Noise reduction**: `-is:reply` to focus on original posts; `-airdrop -giveaway` for crypto topics
+- **Core narrative**: token, protocol, chain, or event keywords
+- **Official lane**: project account, founder, foundation, or governance handle
+- **Bull case lane**: catalyst, upside, adoption, inflow, listing, revenue, fee growth
+- **Bear case lane**: unlock, dilution, exploit, governance risk, emissions, outflow, overvalued
+- **Evidence lane**: `has:links` to surface posts that cite dashboards, governance posts, docs, or articles
 
-### 2. Execute Searches
+### 2. Use crypto-specific noise control
 
-Use the `x_search` tool with `command: "search"`. For each query:
+Default operators for crypto topics:
 
-- Start with `sort: "likes"` and `limit: 15` to surface highest-signal tweets
-- Add `min_likes: 5` or higher to filter noise for broad topics
-- Use `since: "1d"` or `"7d"` depending on how time-sensitive the topic is
-- If a query returns too much noise, narrow with more operators or raise `min_likes`
-- If too few results, broaden with `OR` terms or remove restrictive operators
+- `-is:reply` to focus on original posts
+- `-airdrop -giveaway -whitelist -points -referral` to cut spam
+- Add `lang:en` when the result set is too broad
+- Use cashtags and protocol names together when collisions are common
+- Raise `min_likes` quickly if results are low quality
 
-### 3. Check Key Accounts (Optional)
+### 3. Execute searches
 
-For well-known analysts, fund managers, or company executives, use
-`command: "profile"` to see their recent posts directly.
+Use `x_search` with `command: "search"`:
 
-### 4. Follow Threads (Optional)
+- Start with `sort: "likes"` and `limit: 15`
+- Use `since: "1d"` for fast-moving events and `since: "7d"` for broader narrative checks
+- If the query is noisy, increase `min_likes` and narrow terms
+- If the query is too sparse, broaden with `OR` terms and remove restrictive filters
 
-When a high-engagement tweet appears to be a thread starter, use
-`command: "thread"` with the tweet ID to get full context.
+### 4. Prioritize account tiers
 
-### 5. Synthesize
+When multiple posts say the same thing, prioritize:
 
-Group findings by theme (bullish, bearish, neutral, news/catalysts):
+1. Official protocol or foundation accounts
+2. Founders, core contributors, governance delegates, and major ecosystem builders
+3. High-signal researchers, analysts, or traders with evidence
+4. Broader CT sentiment
 
-```
-### [Theme]
+### 5. Follow threads when needed
 
-[1–2 sentence summary of the theme]
+If a high-signal tweet appears to be a thread starter or contains a partial claim:
 
-- @username: "[key quote]" — [likes]♥ [Tweet](url)
-- @username2: "[another perspective]" — [likes]♥ [Tweet](url)
-```
+- Use `command: "thread"` to get the full context
+- Pull the whole thread before summarizing if the claim changes materially across posts
 
-End with an **Overall Sentiment** paragraph: predominant tone (bullish/bearish/
-mixed/neutral), confidence level, and any notable divergence between retail and
-institutional voices.
+### 6. Synthesize around decision-useful buckets
+
+Group findings into:
+
+1. **Narrative**: what CT thinks is happening
+2. **Catalysts**: launches, governance votes, listings, partnerships, fee/revenue changes
+3. **Risks**: exploit chatter, unlock concern, emissions, treasury selling, governance capture
+4. **Divergence**: where official messaging and CT interpretation differ
 
 ## Refinement Heuristics
 
 | Problem | Fix |
 |---|---|
-| Too much noise | Raise `min_likes`, add `-is:reply`, narrow keywords |
-| Too few results | Broaden with `OR`, remove restrictive operators |
-| Crypto spam | Add `-airdrop -giveaway -whitelist` |
-| Want expert takes only | Use `from:` or `min_likes: 50` |
-| Want substance over hot takes | Add `has:links` |
+| Too much shill spam | Add `-airdrop -giveaway -whitelist -points`, raise `min_likes` |
+| Too many replies | Add `-is:reply` |
+| Need official view | Use `from:project_account` or `command: "profile"` |
+| Need evidence, not hot takes | Add `has:links` |
+| Need faster event pulse | Use `since: "12h"` or `since: "1d"` |
+| Query collisions | Combine token symbol, protocol name, and chain |
 
 ## Output Format
 
 Present a structured briefing:
 
-1. **Query Summary**: what was searched and time window
-2. **Sentiment Themes**: grouped findings with sourced quotes and tweet links
-3. **Overall Sentiment**: tone, confidence, key voices
-4. **Caveats**: X sentiment is not a reliable predictor; sample bias toward vocal minorities; last-7-days window only
+1. **Search scope**: what was searched and the time window
+2. **Key narratives**: grouped themes with sourced tweet links
+3. **Catalysts and risks**: concrete event-level takeaways
+4. **Divergence**: official line vs CT interpretation, if any
+5. **Bottom line**: bullish, bearish, mixed, or confused sentiment, with confidence
+
+Keep the synthesis tight. The goal is not to quote the timeline back to the user. The goal is to surface the parts of CT that are most likely to matter for research or positioning.

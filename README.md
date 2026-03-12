@@ -36,7 +36,8 @@ Dexter takes complex financial questions and turns them into clear, step-by-step
 ## ✅ Prerequisites
 
 - [Bun](https://bun.com) runtime (v1.0 or higher)
-- OpenAI API key (get [here](https://platform.openai.com/api-keys))
+- xAI API key (get [here](https://x.ai/api))
+- OpenAI credentials are optional in this fork
 - Financial Datasets API key (get [here](https://financialdatasets.ai))
 - Exa API key (get [here](https://exa.ai)) - optional, for web search
 
@@ -77,11 +78,19 @@ bun install
 # Copy the example environment file
 cp env.example .env
 
-# Edit .env and add your API keys (if using cloud providers)
+# Edit .env and add your credentials (if using cloud providers)
+# XAI_API_KEY=your-xai-api-key
+#
+# Optional OpenAI credentials:
 # OPENAI_API_KEY=your-openai-api-key
+# OPENAI_BEARER_TOKEN=your-openai-bearer-token
+# OPENAI_ACCESS_TOKEN=your-openai-access-token
+# Note: OpenAI officially documents API-key auth for the API. The bearer-token
+# fallback in this repo is just a generic Authorization header path and is not
+# a documented replacement for API keys.
+#
 # ANTHROPIC_API_KEY=your-anthropic-api-key (optional)
 # GOOGLE_API_KEY=your-google-api-key (optional)
-# XAI_API_KEY=your-xai-api-key (optional)
 # OPENROUTER_API_KEY=your-openrouter-api-key (optional)
 
 # Institutional-grade market data for agents; AAPL, NVDA, MSFT are free
@@ -107,9 +116,11 @@ Or with watch mode for development:
 bun dev
 ```
 
+By default this fork starts on xAI (`grok-4-0709`). OpenAI is optional.
+
 ## 📊 How to Evaluate
 
-Dexter includes an evaluation suite that tests the agent against a dataset of financial questions. Evals use LangSmith for tracking and an LLM-as-judge approach for scoring correctness.
+Dexter includes an evaluation suite that tests the agent against a dataset of research questions. Evals use LangSmith for tracking and the currently configured/default model as the judge.
 
 **Run on all questions:**
 ```bash
@@ -119,6 +130,11 @@ bun run src/evals/run.ts
 **Run on a random sample of data:**
 ```bash
 bun run src/evals/run.ts --sample 10
+```
+
+**Run a custom dataset (for example a crypto eval CSV):**
+```bash
+bun run src/evals/run.ts --dataset src/evals/dataset/finance_agent.csv
 ```
 
 The eval runner displays a real-time UI showing progress, current question, and running accuracy statistics. Results are logged to LangSmith for analysis.

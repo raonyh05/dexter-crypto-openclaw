@@ -1,9 +1,11 @@
 ---
 name: dcf-valuation
-description: Performs discounted cash flow (DCF) valuation analysis to estimate intrinsic value per share. Triggers when user asks for fair value, intrinsic value, DCF, valuation, "what is X worth", price target, undervalued/overvalued analysis, or wants to compare current price to fundamental value.
+description: Performs discounted cash flow (DCF) valuation analysis to estimate intrinsic value per share for public companies and cash-flowing equities. Triggers when user asks for fair value, intrinsic value, DCF, valuation, "what is X worth", price target, undervalued/overvalued analysis, or wants to compare current price to fundamental value. Do not use for crypto tokens or protocol tokenomics.
 ---
 
 # DCF Valuation Skill
+
+Use this skill for listed companies and equity-like assets with reasonably interpretable cash flows. Do not use it for most crypto tokens, emissions models, or protocol tokenomics.
 
 ## Workflow Checklist
 

@@ -5,7 +5,11 @@ import type {
   ToolErrorEvent,
   ToolStartEvent,
 } from './agent/index.js';
-import { getApiKeyNameForProvider, getProviderDisplayName } from './utils/env.js';
+import {
+  getCredentialEnvNamesForProvider,
+  getCredentialLabelForProvider,
+  getProviderDisplayName,
+} from './utils/env.js';
 import { logger } from './utils/logger.js';
 import {
   AgentRunnerController,
@@ -359,8 +363,8 @@ export async function runCli() {
         modelSelection.handleApiKeyConfirm(wantsToSet),
       );
       renderScreenView(
-        'Set API Key',
-        `Would you like to set your ${getProviderDisplayName(state.pendingProvider)} API key?`,
+        'Set Credential',
+        `Would you like to set your ${getProviderDisplayName(state.pendingProvider)} ${getCredentialLabelForProvider(state.pendingProvider)}?`,
         selector,
         'Enter to confirm · esc to decline',
         selector,
@@ -372,10 +376,11 @@ export async function runCli() {
       const input = new ApiKeyInputComponent(true);
       input.onSubmit = (apiKey) => modelSelection.handleApiKeySubmit(apiKey);
       input.onCancel = () => modelSelection.handleApiKeySubmit(null);
-      const apiKeyName = getApiKeyNameForProvider(state.pendingProvider) ?? '';
+      const credentialLabel = getCredentialLabelForProvider(state.pendingProvider);
+      const credentialEnvNames = getCredentialEnvNamesForProvider(state.pendingProvider);
       renderScreenView(
-        `Enter ${getProviderDisplayName(state.pendingProvider)} API Key`,
-        apiKeyName ? `(${apiKeyName})` : '',
+        `Enter ${getProviderDisplayName(state.pendingProvider)} ${credentialLabel}`,
+        credentialEnvNames.length > 0 ? `(${credentialEnvNames.join(' or ')})` : '',
         input,
         'Enter to confirm · Esc to cancel',
         input,

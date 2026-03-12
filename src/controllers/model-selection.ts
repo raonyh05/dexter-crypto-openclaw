@@ -179,7 +179,7 @@ export class ModelSelectionController {
     this.onError(
       `Cannot use ${
         this.pendingProviderValue ? getProviderDisplayName(this.pendingProviderValue) : 'provider'
-      } without an API key.`,
+      } without credentials.`,
     );
     this.resetPendingState();
   }
@@ -196,7 +196,7 @@ export class ModelSelectionController {
       if (saved) {
         this.completeModelSwitch(this.pendingProviderValue, this.pendingSelectedModelId);
       } else {
-        this.onError('Failed to save API key.');
+        this.onError('Failed to save credentials.');
         this.resetPendingState();
       }
       return;
@@ -211,7 +211,7 @@ export class ModelSelectionController {
       return;
     }
 
-    this.onError('API key not set. Provider unchanged.');
+    this.onError('Credentials not set. Provider unchanged.');
     this.resetPendingState();
   }
 

@@ -20,7 +20,7 @@
   - Utils: `src/utils/` (env, config, caching, token estimation, markdown tables)
   - Evals: `src/evals/` (LangSmith evaluation runner with Ink UI)
 - Config: `.dexter/settings.json` (persisted model/provider selection)
-- Environment: `.env` (API keys; see `env.example`)
+- Environment: `.env` (provider credentials; see `env.example`)
 - Scripts: `scripts/release.sh`
 
 ## Build, Test, and Development Commands
@@ -45,26 +45,28 @@
 
 ## LLM Providers
 
-- Supported: OpenAI (default), Anthropic, Google, xAI (Grok), OpenRouter, Ollama (local).
-- Default model: `gpt-5.4`. Provider detection is prefix-based (`claude-` -> Anthropic, `gemini-` -> Google, etc.).
+- Supported: xAI (default), OpenAI, Anthropic, Google, OpenRouter, Ollama (local).
+- Default model: `grok-4-0709`. Provider detection is prefix-based (`claude-` -> Anthropic, `gemini-` -> Google, `grok-` -> xAI, etc.).
 - Fast models for lightweight tasks: see `FAST_MODELS` map in `src/model/llm.ts`.
 - Anthropic uses explicit `cache_control` on system prompt for prompt caching cost savings.
 - Users switch providers/models via `/model` command in the CLI.
 
 ## Tools
 
-- `financial_search`: primary tool for all financial data queries (prices, metrics, filings). Delegates to multiple sub-tools internally.
-- `financial_metrics`: direct metric lookups (revenue, market cap, etc.).
+- `crypto_search`: primary tool for token, protocol, on-chain, governance, security, and crypto narrative research.
+- `protocol_metrics`: crypto-native fundamentals router for tokenomics, KPIs, treasury, unlocks, liquidity, and governance context.
+- `financial_search`: equity/company research router for public-company prices, metrics, news, and related data.
+- `financial_metrics`: public-company statement and ratio analysis.
 - `read_filings`: SEC filing reader for 10-K, 10-Q, 8-K documents.
-- `web_search`: general web search (Exa if `EXASEARCH_API_KEY` set, else Tavily if `TAVILY_API_KEY` set).
+- `web_search`: general web search (Exa if `EXASEARCH_API_KEY` set, else Perplexity if `PERPLEXITY_API_KEY` set, else Tavily if `TAVILY_API_KEY` set).
 - `browser`: Playwright-based web scraping for reading pages the agent discovers.
-- `skill`: invokes SKILL.md-defined workflows (e.g. DCF valuation). Each skill runs at most once per query.
+- `skill`: invokes SKILL.md-defined workflows (e.g. protocol DD, governance review, DCF valuation). Each skill runs at most once per query.
 - Tool registry: `src/tools/registry.ts`. Tools are conditionally included based on env vars.
 
 ## Skills
 
 - Skills live as `SKILL.md` files with YAML frontmatter (`name`, `description`) and markdown body (instructions).
-- Built-in skills: `src/skills/dcf/SKILL.md`.
+- Built-in skills include `src/skills/x-research/SKILL.md`, `src/skills/protocol-due-diligence/SKILL.md`, `src/skills/event-driven-trade-check/SKILL.md`, `src/skills/governance-watch/SKILL.md`, `src/skills/onchain-anomaly-review/SKILL.md`, and `src/skills/dcf/SKILL.md`.
 - Discovery: `src/skills/registry.ts` scans for SKILL.md files at startup.
 - Skills are exposed to the LLM as metadata in the system prompt; the LLM invokes them via the `skill` tool.
 
@@ -78,12 +80,13 @@
 
 ## Environment Variables
 
-- LLM keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`
+- LLM credentials: `XAI_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BEARER_TOKEN`, `OPENAI_ACCESS_TOKEN`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`
 - Ollama: `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)
 - Finance: `FINANCIAL_DATASETS_API_KEY`
-- Search: `EXASEARCH_API_KEY` (preferred), `TAVILY_API_KEY` (fallback)
+- Optional crypto research provider: `CRYPTO_RESEARCH_API_BASE_URL`, `CRYPTO_RESEARCH_API_KEY`, `CRYPTO_RESEARCH_API_KEY_HEADER`
+- Search: `EXASEARCH_API_KEY` (preferred), `PERPLEXITY_API_KEY`, `TAVILY_API_KEY`
 - Tracing: `LANGSMITH_API_KEY`, `LANGSMITH_ENDPOINT`, `LANGSMITH_PROJECT`, `LANGSMITH_TRACING`
-- Never commit `.env` files or real API keys.
+- Never commit `.env` files or real API keys/tokens.
 
 ## Version & Release
 
@@ -100,6 +103,6 @@
 
 ## Security
 
-- API keys stored in `.env` (gitignored). Users can also enter keys interactively via the CLI.
+- Provider credentials are stored in `.env` (gitignored). Users can also enter keys interactively via the CLI.
 - Config stored in `.dexter/settings.json` (gitignored).
 - Never commit or expose real API keys, tokens, or credentials.

@@ -238,11 +238,11 @@ export function formatUserFacingError(raw: string, provider?: string): string {
     case 'rate_limit':
       return `${providerLabel}API rate limit reached. Please wait a moment and try again.`;
     case 'billing':
-      return `${providerLabel}API key has run out of credits or has an insufficient balance. ` +
-        'Check your billing dashboard and top up, or switch to a different API key.';
+      return `${providerLabel}credentials have run out of credits or have an insufficient balance. ` +
+        'Check your billing dashboard and top up, or switch to different credentials.';
     case 'auth':
-      return `${providerLabel}API key is invalid or expired. ` +
-        'Check that your API key is correct in your environment variables.';
+      return `${providerLabel}credentials are invalid or expired. ` +
+        'Check that your API key or bearer token is correct in your environment variables.';
     case 'timeout':
       return 'LLM request timed out. Please try again.';
     case 'overloaded':

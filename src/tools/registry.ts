@@ -1,6 +1,18 @@
 import { StructuredToolInterface } from '@langchain/core/tools';
-import { createFinancialSearch, createFinancialMetrics, createReadFilings } from './finance/index.js';
-import { exaSearch, perplexitySearch, tavilySearch, WEB_SEARCH_DESCRIPTION, xSearchTool, X_SEARCH_DESCRIPTION } from './search/index.js';
+import {
+  createFinancialSearch,
+  createFinancialMetrics,
+  createCryptoSearch,
+  createProtocolMetrics,
+  createReadFilings,
+  hasProtocolMetricsTools,
+} from './finance/index.js';
+import {
+  WEB_SEARCH_DESCRIPTION,
+  X_SEARCH_DESCRIPTION,
+  getConfiguredWebSearchTool,
+  getConfiguredXSearchTool,
+} from './search/index.js';
 import { skillTool, SKILL_TOOL_DESCRIPTION } from './skill.js';
 import { webFetchTool, WEB_FETCH_DESCRIPTION } from './fetch/web-fetch.js';
 import { browserTool, BROWSER_DESCRIPTION } from './browser/browser.js';
@@ -9,30 +21,29 @@ import { writeFileTool, WRITE_FILE_DESCRIPTION } from './filesystem/write-file.j
 import { editFileTool, EDIT_FILE_DESCRIPTION } from './filesystem/edit-file.js';
 import { FINANCIAL_SEARCH_DESCRIPTION } from './finance/financial-search.js';
 import { FINANCIAL_METRICS_DESCRIPTION } from './finance/financial-metrics.js';
+import { CRYPTO_SEARCH_DESCRIPTION } from './finance/crypto-search.js';
+import { PROTOCOL_METRICS_DESCRIPTION } from './finance/protocol-metrics.js';
 import { READ_FILINGS_DESCRIPTION } from './finance/read-filings.js';
 import { heartbeatTool, HEARTBEAT_TOOL_DESCRIPTION } from './heartbeat/heartbeat-tool.js';
-import { memoryGetTool, MEMORY_GET_DESCRIPTION, memorySearchTool, MEMORY_SEARCH_DESCRIPTION, memoryUpdateTool, MEMORY_UPDATE_DESCRIPTION } from './memory/index.js';
+import {
+  memoryGetTool,
+  MEMORY_GET_DESCRIPTION,
+  memorySearchTool,
+  MEMORY_SEARCH_DESCRIPTION,
+  memoryUpdateTool,
+  MEMORY_UPDATE_DESCRIPTION,
+} from './memory/index.js';
 import { discoverSkills } from '../skills/index.js';
 
 /**
  * A registered tool with its rich description for system prompt injection.
  */
 export interface RegisteredTool {
-  /** Tool name (must match the tool's name property) */
   name: string;
-  /** The actual tool instance */
   tool: StructuredToolInterface;
-  /** Rich description for system prompt (includes when to use, when not to use, etc.) */
   description: string;
 }
 
-/**
- * Get all registered tools with their descriptions.
- * Conditionally includes tools based on environment configuration.
- *
- * @param model - The model name (needed for tools that require model-specific configuration)
- * @returns Array of registered tools
- */
 export function getToolRegistry(model: string): RegisteredTool[] {
   const tools: RegisteredTool[] = [
     {
@@ -44,6 +55,11 @@ export function getToolRegistry(model: string): RegisteredTool[] {
       name: 'financial_metrics',
       tool: createFinancialMetrics(model),
       description: FINANCIAL_METRICS_DESCRIPTION,
+    },
+    {
+      name: 'crypto_search',
+      tool: createCryptoSearch(model),
+      description: CRYPTO_SEARCH_DESCRIPTION,
     },
     {
       name: 'read_filings',
@@ -97,29 +113,25 @@ export function getToolRegistry(model: string): RegisteredTool[] {
     },
   ];
 
-  // Include web_search if Exa, Perplexity, or Tavily API key is configured (Exa → Perplexity → Tavily)
-  if (process.env.EXASEARCH_API_KEY) {
-    tools.push({
-      name: 'web_search',
-      tool: exaSearch,
-      description: WEB_SEARCH_DESCRIPTION,
+  if (hasProtocolMetricsTools()) {
+    tools.splice(3, 0, {
+      name: 'protocol_metrics',
+      tool: createProtocolMetrics(model),
+      description: PROTOCOL_METRICS_DESCRIPTION,
     });
-  } else if (process.env.PERPLEXITY_API_KEY) {
+  }
+
+  const webSearchTool = getConfiguredWebSearchTool();
+  if (webSearchTool) {
     tools.push({
       name: 'web_search',
-      tool: perplexitySearch,
-      description: WEB_SEARCH_DESCRIPTION,
-    });
-  } else if (process.env.TAVILY_API_KEY) {
-    tools.push({
-      name: 'web_search',
-      tool: tavilySearch,
+      tool: webSearchTool,
       description: WEB_SEARCH_DESCRIPTION,
     });
   }
 
-  // Include x_search if X Bearer Token is configured
-  if (process.env.X_BEARER_TOKEN) {
+  const xSearchTool = getConfiguredXSearchTool();
+  if (xSearchTool) {
     tools.push({
       name: 'x_search',
       tool: xSearchTool,
@@ -127,7 +139,6 @@ export function getToolRegistry(model: string): RegisteredTool[] {
     });
   }
 
-  // Include skill tool if any skills are available
   const availableSkills = discoverSkills();
   if (availableSkills.length > 0) {
     tools.push({
@@ -140,25 +151,12 @@ export function getToolRegistry(model: string): RegisteredTool[] {
   return tools;
 }
 
-/**
- * Get just the tool instances for binding to the LLM.
- *
- * @param model - The model name
- * @returns Array of tool instances
- */
 export function getTools(model: string): StructuredToolInterface[] {
-  return getToolRegistry(model).map((t) => t.tool);
+  return getToolRegistry(model).map((entry) => entry.tool);
 }
 
-/**
- * Build the tool descriptions section for the system prompt.
- * Formats each tool's rich description with a header.
- *
- * @param model - The model name
- * @returns Formatted string with all tool descriptions
- */
 export function buildToolDescriptions(model: string): string {
   return getToolRegistry(model)
-    .map((t) => `### ${t.name}\n\n${t.description}`)
+    .map((entry) => `### ${entry.name}\n\n${entry.description}`)
     .join('\n\n');
 }

@@ -1,6 +1,6 @@
 import { AIMessage } from '@langchain/core/messages';
 import { StructuredToolInterface } from '@langchain/core/tools';
-import { callLlm } from '../model/llm.js';
+import { callLlm, DEFAULT_MODEL } from '../model/llm.js';
 import { getTools } from '../tools/registry.js';
 import { buildSystemPrompt, buildIterationPrompt, loadSoulDocument } from './prompts.js';
 import { extractTextContent, hasToolCalls } from '../utils/ai-message.js';
@@ -14,8 +14,6 @@ import { AgentToolExecutor } from './tool-executor.js';
 import { MemoryManager } from '../memory/index.js';
 import { runMemoryFlush, shouldRunMemoryFlush } from '../memory/flush.js';
 
-
-const DEFAULT_MODEL = 'gpt-5.4';
 const DEFAULT_MAX_ITERATIONS = 10;
 const MAX_OVERFLOW_RETRIES = 2;
 const OVERFLOW_KEEP_TOOL_USES = 3;
@@ -81,7 +79,7 @@ export class Agent {
     const startTime = Date.now();
 
     if (this.tools.length === 0) {
-      yield { type: 'done', answer: 'No tools available. Please check your API key configuration.', toolCalls: [], iterations: 0, totalTime: Date.now() - startTime };
+      yield { type: 'done', answer: 'No tools available. Please check your provider credential configuration.', toolCalls: [], iterations: 0, totalTime: Date.now() - startTime };
       return;
     }
 

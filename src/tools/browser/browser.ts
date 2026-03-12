@@ -40,7 +40,8 @@ Control a web browser to navigate websites and extract information.
 
 - Reading static web pages or articles (use **web_fetch** instead - it is faster and returns content in a single call)
 - Simple queries that web_search can already answer
-- Structured financial data (use financial_search instead)
+- Structured company financial data (use financial_search instead)
+- Structured crypto research data (use crypto_search / protocol_metrics instead when available)
 - SEC filings content (use read_filings instead)
 - General knowledge questions
 

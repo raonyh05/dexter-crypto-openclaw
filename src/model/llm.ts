@@ -14,9 +14,10 @@ import type { TokenUsage } from '@/agent/types';
 import { logger } from '@/utils';
 import { classifyError, isNonRetryableError } from '@/utils/errors';
 import { resolveProvider, getProviderById } from '@/providers';
+import { getOpenAICredential } from '@/utils/provider-auth';
 
-export const DEFAULT_PROVIDER = 'openai';
-export const DEFAULT_MODEL = 'gpt-5.4';
+export const DEFAULT_PROVIDER = 'xai';
+export const DEFAULT_MODEL = 'grok-4-0709';
 
 /**
  * Gets the fast model variant for the given provider.
@@ -62,6 +63,14 @@ function getApiKey(envVar: string): string {
     throw new Error(`[LLM] ${envVar} not found in environment variables`);
   }
   return apiKey;
+}
+
+function getOpenAICredentialOrThrow(): string {
+  const credential = getOpenAICredential();
+  if (!credential) {
+    throw new Error('[LLM] OPENAI_API_KEY, OPENAI_BEARER_TOKEN, or OPENAI_ACCESS_TOKEN not found in environment variables');
+  }
+  return credential.value;
 }
 
 // Factories keyed by provider id — prefix routing is handled by resolveProvider()
@@ -126,7 +135,7 @@ const DEFAULT_FACTORY: ModelFactory = (name, opts) =>
   new ChatOpenAI({
     model: name,
     ...opts,
-    apiKey: getApiKey('OPENAI_API_KEY'),
+    apiKey: getOpenAICredentialOrThrow(),
   });
 
 export function getChatModel(
