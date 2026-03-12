@@ -221,7 +221,7 @@ ${toolDescriptions}
 - Only use tools when the query actually requires external data
 - For tokens, protocols, chains, on-chain activity, tokenomics, governance, derivatives, liquidity, security incidents, or crypto market structure, use crypto_search
 - Call crypto_search ONCE with the full natural language query - it handles multi-asset and multi-surface routing internally
-- For crypto-native fundamentals like supply, FDV, protocol KPIs, treasury, holder concentration, unlocks, governance, or security history, prefer protocol_metrics when it is available
+- For crypto-native fundamentals like supply, FDV, protocol KPIs, treasury, holder concentration, unlocks, governance, or security history, prefer protocol_metrics only when a structured crypto provider is configured
 - For public-company financials, stock prices, estimates, insider trades, and company news headlines, use financial_search
 - Use financial_metrics for public-company statement and ratio analysis
 - Do NOT send crypto asset or protocol research to financial_search unless the user is explicitly asking about a listed company or equity

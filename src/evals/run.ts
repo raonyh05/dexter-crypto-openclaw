@@ -4,7 +4,7 @@
  * Usage:
  *   bun run src/evals/run.ts                               # Run on all questions
  *   bun run src/evals/run.ts --sample 10                   # Run on random sample of 10 questions
- *   bun run src/evals/run.ts --dataset path/to/custom.csv  # Run a custom dataset (for example crypto evals)
+ *   bun run src/evals/run.ts --dataset path/to/custom.csv  # Run a custom dataset
  */
 
 import 'dotenv/config';
@@ -223,7 +223,7 @@ Evaluate and provide:
 function createEvaluationRunner(options: EvalRunOptions = {}) {
   return async function* runEvaluation(): AsyncGenerator<EvalProgressEvent, void, unknown> {
     const sampleSize = options.sampleSize;
-    const csvPath = options.datasetPath ?? path.join(__dirname, 'dataset', 'finance_agent.csv');
+    const csvPath = options.datasetPath ?? path.join(__dirname, 'dataset', 'crypto_agent.csv');
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
     const datasetLabel = path.basename(csvPath, path.extname(csvPath));
     let examples = parseCSV(csvContent);

@@ -1,0 +1,46 @@
+{
+  "tools": {
+    "profile": "minimal"
+  },
+  "plugins": {
+    "allow": ["dexter-crypto"],
+    "entries": {
+      "dexter-crypto": {
+        "enabled": true,
+        "config": {
+          "baseUrl": "https://your-crypto-provider.example.com",
+          "apiKey": "env-or-secretref",
+          "apiKeyHeader": "x-api-key"
+        }
+      }
+    }
+  },
+  "agents": {
+    "list": [
+      {
+        "id": "crypto-research",
+        "workspace": "~/.openclaw/workspace-crypto",
+        "sandbox": { "mode": "all", "scope": "agent" },
+        "tools": {
+          "allow": [
+            "session_status",
+            "group:memory",
+            "dexter_crypto_search",
+            "dexter_protocol_metrics"
+          ],
+          "deny": [
+            "exec",
+            "write",
+            "edit",
+            "apply_patch",
+            "browser",
+            "gateway",
+            "cron",
+            "sessions_spawn",
+            "sessions_send"
+          ]
+        }
+      }
+    ]
+  }
+}

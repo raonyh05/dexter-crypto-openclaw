@@ -17,6 +17,11 @@ export interface ApiConfig {
   label?: string;
 }
 
+export interface ApiCallOptions {
+  cacheable?: boolean;
+  timeoutMs?: number;
+}
+
 /**
  * Remove redundant fields from API payloads before they are returned to the LLM.
  * This reduces token usage while preserving the financial metrics needed for analysis.
@@ -60,7 +65,7 @@ export async function callConfiguredApi(
   config: ApiConfig,
   endpoint: string,
   params: Record<string, string | number | string[] | undefined>,
-  options?: { cacheable?: boolean }
+  options?: ApiCallOptions
 ): Promise<ApiResponse> {
   const label = describeRequest(endpoint, params);
 
@@ -93,17 +98,22 @@ export async function callConfiguredApi(
   }
 
   let response: Response;
+  const controller = new AbortController();
+  const timeoutMs = options?.timeoutMs ?? 20_000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const headers: Record<string, string> = {};
     if (apiKey) {
       headers[config.apiKeyHeader ?? 'x-api-key'] = apiKey;
     }
 
-    response = await fetch(url.toString(), { headers });
+    response = await fetch(url.toString(), { headers, signal: controller.signal });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`[${apiLabel}] network error: ${label} -> ${message}`);
     throw new Error(`[${apiLabel}] request failed for ${label}: ${message}`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!response.ok) {
@@ -128,7 +138,7 @@ export async function callConfiguredApi(
 export async function callApi(
   endpoint: string,
   params: Record<string, string | number | string[] | undefined>,
-  options?: { cacheable?: boolean }
+  options?: ApiCallOptions
 ): Promise<ApiResponse> {
   return callConfiguredApi(
     {
@@ -141,4 +151,32 @@ export async function callApi(
     params,
     options
   );
+}
+
+export function getCryptoMarketApiConfig(): ApiConfig {
+  const cryptoBaseUrl = process.env.CRYPTO_RESEARCH_API_BASE_URL?.trim();
+
+  if (cryptoBaseUrl) {
+    return {
+      baseUrl: cryptoBaseUrl,
+      apiKey: () => process.env.CRYPTO_RESEARCH_API_KEY,
+      apiKeyHeader: process.env.CRYPTO_RESEARCH_API_KEY_HEADER?.trim() || 'x-api-key',
+      label: 'Crypto Research API',
+    };
+  }
+
+  return {
+    baseUrl: BASE_URL,
+    apiKey: () => process.env.FINANCIAL_DATASETS_API_KEY,
+    apiKeyHeader: 'x-api-key',
+    label: 'Financial Datasets API',
+  };
+}
+
+export async function callCryptoMarketApi(
+  endpoint: string,
+  params: Record<string, string | number | string[] | undefined>,
+  options?: ApiCallOptions,
+): Promise<ApiResponse> {
+  return callConfiguredApi(getCryptoMarketApiConfig(), endpoint, params, options);
 }

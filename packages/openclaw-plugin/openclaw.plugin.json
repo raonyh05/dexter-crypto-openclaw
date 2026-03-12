@@ -1,0 +1,31 @@
+{
+  "id": "dexter-crypto",
+  "name": "Dexter Crypto",
+  "version": "0.1.0",
+  "description": "Crypto-first research tools and bundled skills for OpenClaw.",
+  "entry": "./src/index.ts",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Base URL for the read-only crypto research provider."
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for the crypto research provider.",
+        "uiHints": {
+          "secret": true
+        }
+      },
+      "apiKeyHeader": {
+        "type": "string",
+        "default": "x-api-key",
+        "description": "Header used for the provider API key."
+      }
+    },
+    "required": [
+      "baseUrl"
+    ]
+  }
+}

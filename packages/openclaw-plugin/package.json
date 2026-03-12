@@ -1,0 +1,11 @@
+{
+  "name": "@dexter-crypto/openclaw-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "description": "OpenClaw plugin scaffold for Dexter Crypto research tools.",
+  "scripts": {
+    "build": "tsx src/index.ts"
+  }
+}

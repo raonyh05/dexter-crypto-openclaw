@@ -1,7 +1,7 @@
 # Repository Guidelines
 
-- Repo: https://github.com/virattt/dexter
-- Dexter is a CLI-based AI agent for deep financial research, built with TypeScript, Ink (React for CLI), and LangChain.
+- Repo: https://github.com/raonyh05/dexter-crypto-openclaw
+- Dexter Crypto OpenClaw is a crypto-first research engine with a standalone CLI plus an OpenClaw plugin scaffold, built with TypeScript, Ink (React for CLI), and LangChain.
 
 ## Project Structure
 
@@ -22,6 +22,9 @@
 - Config: `.dexter/settings.json` (persisted model/provider selection)
 - Environment: `.env` (provider credentials; see `env.example`)
 - Scripts: `scripts/release.sh`
+- OpenClaw packaging:
+  - Shared plugin scaffold: `packages/openclaw-plugin/`
+  - Sample OpenClaw config: `packages/openclaw-plugin/examples/openclaw.crypto-agent.sample.json`
 
 ## Build, Test, and Development Commands
 
@@ -31,7 +34,7 @@
 - Dev (watch mode): `bun run dev`
 - Type-check: `bun run typecheck`
 - Tests: `bun test`
-- Evals: `bun run src/evals/run.ts` (full) or `bun run src/evals/run.ts --sample 10` (sampled)
+- Evals: `bun run src/evals/run.ts` (defaults to `crypto_agent.csv`) or `bun run src/evals/run.ts --sample 10` (sampled)
 - CI runs `bun run typecheck` and `bun test` on push/PR.
 
 ## Coding Style & Conventions
@@ -54,7 +57,7 @@
 ## Tools
 
 - `crypto_search`: primary tool for token, protocol, on-chain, governance, security, and crypto narrative research.
-- `protocol_metrics`: crypto-native fundamentals router for tokenomics, KPIs, treasury, unlocks, liquidity, and governance context.
+- `protocol_metrics`: structured crypto-native fundamentals router for tokenomics, KPIs, treasury, unlocks, liquidity, and governance context. Only enabled when `CRYPTO_RESEARCH_API_BASE_URL` is configured.
 - `financial_search`: equity/company research router for public-company prices, metrics, news, and related data.
 - `financial_metrics`: public-company statement and ratio analysis.
 - `read_filings`: SEC filing reader for 10-K, 10-Q, 8-K documents.
@@ -82,8 +85,8 @@
 
 - LLM credentials: `XAI_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BEARER_TOKEN`, `OPENAI_ACCESS_TOKEN`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`
 - Ollama: `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)
-- Finance: `FINANCIAL_DATASETS_API_KEY`
-- Optional crypto research provider: `CRYPTO_RESEARCH_API_BASE_URL`, `CRYPTO_RESEARCH_API_KEY`, `CRYPTO_RESEARCH_API_KEY_HEADER`
+- Finance fallback: `FINANCIAL_DATASETS_API_KEY`
+- Primary crypto provider: `CRYPTO_RESEARCH_API_BASE_URL`, `CRYPTO_RESEARCH_API_KEY`, `CRYPTO_RESEARCH_API_KEY_HEADER`
 - Search: `EXASEARCH_API_KEY` (preferred), `PERPLEXITY_API_KEY`, `TAVILY_API_KEY`
 - Tracing: `LANGSMITH_API_KEY`, `LANGSMITH_ENDPOINT`, `LANGSMITH_PROJECT`, `LANGSMITH_TRACING`
 - Never commit `.env` files or real API keys/tokens.

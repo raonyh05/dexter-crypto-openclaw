@@ -7,6 +7,7 @@ import { formatToolResult } from '../types.js';
 import { getCurrentDate } from '../../agent/prompts.js';
 import { getConfiguredCryptoResearchTools, hasCryptoResearchApi } from './crypto.js';
 import { getConfiguredWebSearchTool, getConfiguredXSearchTool } from '../search/index.js';
+import { buildAggregatedToolPayload } from './aggregation.js';
 
 export const PROTOCOL_METRICS_DESCRIPTION = `
 Intelligent meta-tool for crypto-native fundamental analysis. Routes natural language queries about tokenomics, protocol metrics, treasury, governance, on-chain activity, liquidity, derivatives, and security context.
@@ -39,16 +40,6 @@ function formatSubToolName(name: string): string {
   return name.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-function buildResultKey(toolName: string, args: Record<string, unknown>): string {
-  const identity =
-    (args.protocol_slug as string | undefined) ||
-    (args.asset as string | undefined) ||
-    (args.contract_address as string | undefined) ||
-    (args.chain as string | undefined);
-
-  return identity ? `${toolName}_${identity}` : toolName;
-}
-
 function getProtocolMetricsTools(): StructuredToolInterface[] {
   const tools: StructuredToolInterface[] = [...getConfiguredCryptoResearchTools()];
 
@@ -66,7 +57,7 @@ function getProtocolMetricsTools(): StructuredToolInterface[] {
 }
 
 export function hasProtocolMetricsTools(): boolean {
-  return getProtocolMetricsTools().length > 0;
+  return hasCryptoResearchApi();
 }
 
 function buildRouterPrompt(): string {
@@ -116,7 +107,7 @@ ${xAvailability}
 
 3. Efficiency
    - Prefer structured crypto data tools when available.
-   - Use web_search for official sources or when structured tools are unavailable.
+   - Use web_search for official sources, governance forums, or supporting context after structured tools.
    - Use x_search only when the user's question depends on community or CT reaction.
    - For comparisons, call the same tool for each protocol or token.
 
@@ -141,7 +132,7 @@ export function createProtocolMetrics(model: string): DynamicStructuredTool {
         return formatToolResult(
           {
             error:
-              'No protocol metrics tools are configured. Set CRYPTO_RESEARCH_API_BASE_URL and/or web/X search credentials to enable crypto-native fundamentals routing.',
+              'No structured crypto provider is configured. Set CRYPTO_RESEARCH_API_BASE_URL to enable protocol_metrics.',
           },
           [],
         );
@@ -195,24 +186,8 @@ export function createProtocolMetrics(model: string): DynamicStructuredTool {
         }),
       );
 
-      const successfulResults = results.filter((result) => result.error === null);
-      const failedResults = results.filter((result) => result.error !== null);
-      const allUrls = results.flatMap((result) => result.sourceUrls);
-      const combinedData: Record<string, unknown> = {};
-
-      for (const result of successfulResults) {
-        combinedData[buildResultKey(result.tool, result.args as Record<string, unknown>)] = result.data;
-      }
-
-      if (failedResults.length > 0) {
-        combinedData._errors = failedResults.map((result) => ({
-          tool: result.tool,
-          args: result.args,
-          error: result.error,
-        }));
-      }
-
-      return formatToolResult(combinedData, allUrls);
+      const aggregated = buildAggregatedToolPayload(results);
+      return formatToolResult(aggregated.data, aggregated.sourceUrls);
     },
   });
 }

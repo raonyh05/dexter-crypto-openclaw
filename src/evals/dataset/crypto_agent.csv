@@ -1,0 +1,6 @@
+question,answer
+"Why did SOL move this week?","A good answer should combine recent SOL price action with at least one concrete catalyst or market-structure driver, such as ecosystem news, governance, derivatives positioning, or broader market beta."
+"What are the next 30-day unlock risks for ARB?","A good answer should identify whether meaningful ARB unlocks are scheduled in the next 30 days, estimate scale versus circulating supply if available, and note that the result should be verified with source data."
+"Give me a protocol DD snapshot for Hyperliquid.","A good answer should cover what Hyperliquid is, the most relevant operating or adoption metrics available, major token or governance considerations, and key risks."
+"Is community sentiment diverging from fundamentals for JUP right now?","A good answer should compare CT or social narrative with structured protocol or token metrics and call out whether the two appear aligned or disconnected."
+"Summarize recent security incidents affecting bridges on Solana.","A good answer should list the most relevant recent incidents or explicitly state if none were found, with dates or source-backed context."

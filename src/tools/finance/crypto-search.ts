@@ -7,6 +7,7 @@ import { formatToolResult } from '../types.js';
 import { getCurrentDate } from '../../agent/prompts.js';
 import { CRYPTO_PRICE_TOOLS, getConfiguredCryptoResearchTools, hasCryptoResearchApi } from './crypto.js';
 import { getConfiguredWebSearchTool, getConfiguredXSearchTool } from '../search/index.js';
+import { buildAggregatedToolPayload } from './aggregation.js';
 
 export const CRYPTO_SEARCH_DESCRIPTION = `
 Intelligent meta-tool for crypto research. Takes a natural language query and routes to token price, tokenomics, protocol, on-chain, governance, derivatives, security, web, and X/Twitter sources as available.
@@ -39,17 +40,6 @@ Intelligent meta-tool for crypto research. Takes a natural language query and ro
 
 function formatSubToolName(name: string): string {
   return name.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
-
-function buildResultKey(toolName: string, args: Record<string, unknown>): string {
-  const identity =
-    (args.ticker as string | undefined) ||
-    (args.asset as string | undefined) ||
-    (args.protocol_slug as string | undefined) ||
-    (args.contract_address as string | undefined) ||
-    (args.chain as string | undefined);
-
-  return identity ? `${toolName}_${identity}` : toolName;
 }
 
 function getCryptoSearchTools(): StructuredToolInterface[] {
@@ -192,24 +182,8 @@ export function createCryptoSearch(model: string): DynamicStructuredTool {
         }),
       );
 
-      const successfulResults = results.filter((result) => result.error === null);
-      const failedResults = results.filter((result) => result.error !== null);
-      const allUrls = results.flatMap((result) => result.sourceUrls);
-      const combinedData: Record<string, unknown> = {};
-
-      for (const result of successfulResults) {
-        combinedData[buildResultKey(result.tool, result.args as Record<string, unknown>)] = result.data;
-      }
-
-      if (failedResults.length > 0) {
-        combinedData._errors = failedResults.map((result) => ({
-          tool: result.tool,
-          args: result.args,
-          error: result.error,
-        }));
-      }
-
-      return formatToolResult(combinedData, allUrls);
+      const aggregated = buildAggregatedToolPayload(results);
+      return formatToolResult(aggregated.data, aggregated.sourceUrls);
     },
   });
 }
